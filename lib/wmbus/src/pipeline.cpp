@@ -205,6 +205,7 @@ bool wmbus_decode(Decoder* d, const Frame& f, const DecodeOptions& opt) {
     memset(&to, 0, sizeof(to));
     to.now_unix = opt.now_unix;
     to.simulated = opt.simulated;
+    to.decode_bad_tag = opt.decode_bad_tag;
     const uint8_t* aes_key = opt.key && (opt.key_len == 0 || opt.key_len == 16) ? opt.key : nullptr;
     Telegram* t = &d->t;
     if (!telegram_parse(f, to, t)) return false;

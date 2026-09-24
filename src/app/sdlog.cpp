@@ -169,10 +169,9 @@ void sdlog_telegram(const Frame& f, const Decoder& d, int16_t rssi, const double
         for (int i = 0; i < r.num_fields && !first; ++i)
             if (!r.fields[i].hidden && !r.fields[i].is_text) first = &r.fields[i];
         if (first) field_format(first, sum, sizeof(sum));
-        n = (size_t)snprintf(buf, cap, "%s,%s,%s,%02X,%02X,%s,%s,%d,%.6f,%.6f,%s", ts, r.id, r.mfct,
-                             r.version, r.type, r.driver ? r.driver->name : "", link_mode_name(f.mode), rssi, pos[0],
-                             pos[1], sum);
-        if (!ring_push(F_WARD, buf, n)) s_dropped++;
+        int w = snprintf(buf, cap, "%s,%s,%s,%02X,%02X,%s,%s,%d,%.6f,%.6f,%s", ts, r.id, r.mfct, r.version, r.type,
+                         r.driver ? r.driver->name : "", link_mode_name(f.mode), rssi, pos[0], pos[1], sum);
+        if (w < 0 || (size_t)w >= cap || !ring_push(F_WARD, buf, (size_t)w)) s_dropped++;
     }
 }
 

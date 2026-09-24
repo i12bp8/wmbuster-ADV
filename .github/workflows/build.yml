@@ -1,0 +1,117 @@
+# Builds and tests every push and pull request, and publishes a GitHub release
+# (firmware images plus the matching CHANGELOG.md section) when
+#   - a tag vX.Y.Z is pushed, or
+#   - the workflow is run by hand (Actions > Build > Run workflow) with a tag
+#     name; the tag is then created on the commit that was built.
+# Tags with a suffix (vX.Y.Z-beta.1) are published as pre-releases.
+name: Build
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release tag to publish, e.g. v2.1.0 or v2.1.0-beta.1 (empty: build only)'
+        required: false
+        default: ''
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - name: Host tests
+        run: make -C test/host
+
+      - name: Version
+        env:
+          RELEASE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.release || '' }}
+        run: |
+          src=$(sed -n 's/^#define WMB_VERSION "\(.*\)"$/\1/p' src/version.h)
+          tag=""
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="$GITHUB_REF_NAME"
+          elif [ -n "$RELEASE_INPUT" ]; then
+            tag="$RELEASE_INPUT"
+          fi
+          if [ -n "$tag" ]; then
+            if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+              echo "::error::release tag '$tag' is not like v2.1.0 or v2.1.0-beta.1"
+              exit 1
+            fi
+            ver="${tag#v}"
+            if [ "${ver%%-*}" != "$src" ]; then
+              echo "::error::tag $tag does not match WMB_VERSION $src in src/version.h"
+              exit 1
+            fi
+            echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
+          else
+            ver="$src+$(git rev-parse --short=7 HEAD)"
+          fi
+          echo "VERSION=$ver" >> "$GITHUB_ENV"
+          echo "PLATFORMIO_BUILD_FLAGS=-DWMB_VERSION=\\\"$ver\\\"" >> "$GITHUB_ENV"
+
+      - name: Build firmware
+        run: pio run -e m5stack-cardputer-adv
+
+      - name: Collect images
+        run: |
+          mkdir dist
+          cp .pio/build/m5stack-cardputer-adv/wmbuster-adv-full.bin dist/
+          cp .pio/build/m5stack-cardputer-adv/firmware.bin dist/
+          (cd dist && sha256sum *.bin > SHA256SUMS)
+          cat dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wmbuster-adv-${{ env.VERSION }}
+          path: dist/
+
+      - name: Release
+        if: env.RELEASE_TAG != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base="${VERSION%%-*}"
+          # The CHANGELOG.md section for this version, without its heading.
+          awk -v v="$base" '/^## /{p = ($2 == v); next} p' CHANGELOG.md > notes.md
+          cat >> notes.md <<'NOTES'
+
+          ## Install
+
+          * **First install, or coming from 1.x:** flash `wmbuster-adv-full.bin` at offset **0x0**, for example with the [esptool-js web flasher](https://espressif.github.io/esptool-js/) or `esptool.py --chip esp32s3 write_flash 0x0 wmbuster-adv-full.bin`.
+          * **Update from 2.x:** upload `firmware.bin` in the web UI (Settings → Firmware update).
+          NOTES
+          flags=()
+          if [[ "$VERSION" == *-* ]]; then flags+=(--prerelease); fi
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/* --clobber
+          else
+            # Creates the tag on the built commit when it doesn't exist yet.
+            gh release create "$RELEASE_TAG" dist/* --target "$GITHUB_SHA" "${flags[@]}" \
+              --title "wM-Buster ADV v$VERSION" --notes-file notes.md
+          fi

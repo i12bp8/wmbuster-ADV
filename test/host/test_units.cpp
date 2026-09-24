@@ -9,6 +9,7 @@
 #include "wmbus/coding.h"
 #include "wmbus/crc.h"
 #include "wmbus/dv.h"
+#include "wmbus/driver_table.h"
 #include "wmbus/engine.h"
 #include "wmbus/formula.h"
 #include "wmbus/frame.h"
@@ -224,12 +225,39 @@ static void test_lookup() {
     CHECK(!strcmp(out, "DRY ERROR_FLAGS_10 REVERSE"));
 }
 
+// AES-CCM (mode 10): a telegram whose tag fails is rejected unless the caller
+// asks for wmbusmeters' behaviour (decode it, flagged FAILED_DECODE).
+static void test_ccm_tag() {
+    static const char* BAD = "4544372c060382533c168c20307a3010ff2a1001dc2e0d00cf1a85672e138d6c0af61338403fdeb528ab264e2c"
+                             "61e41b06073550aa296ae9815c8a7a9868ec6c624cfbbcecb3";
+    static const char* GOOD = "4544372c060382533c168c20307a3010ff2a10018c570e006da7632471f42b0a3ceccd461353573ed02b8711"
+                              "8bc5ffe982f7f00a0274543bc51938f8b9c8bb8928114d60788a";
+    uint8_t key[16], bytes[128];
+    CHECK(hex_to_bytes("BF902DD6DFADAFE83E4AE6832B5FA14C", key, sizeof(key)) == 16);
+    static Decoder d;
+    DecodeOptions o{};
+    o.key = key;
+    o.key_len = 16;
+    o.forced_driver = driver_by_name("kamwater");
+    Frame f;
+    size_t n = hex_to_bytes(BAD, bytes, sizeof(bytes));
+    CHECK(n && frame_from_bytes(bytes, n, &f));
+    CHECK(!wmbus_decode(&d, f, o) && d.res.status == DecodeStatus::Encrypted && d.res.decrypt == DecryptStatus::WrongKey);
+    o.decode_bad_tag = true;
+    CHECK(wmbus_decode(&d, f, o) && d.res.decrypt == DecryptStatus::Decrypted);
+    o.decode_bad_tag = false;
+    n = hex_to_bytes(GOOD, bytes, sizeof(bytes));
+    CHECK(n && frame_from_bytes(bytes, n, &f));
+    CHECK(wmbus_decode(&d, f, o) && d.res.decrypt == DecryptStatus::Decrypted);
+}
+
 int main() {
     test_crc_coding();
     test_aes();
     test_capture();
     test_formula();
     test_lookup();
+    test_ccm_tag();
     printf("unit tests: %d passed, %d failed\n", g_ok, g_fail);
     return g_fail ? 1 : 0;
 }

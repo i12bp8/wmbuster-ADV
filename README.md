@@ -65,10 +65,17 @@ driver engine, and shows the results on the Cardputer, in a web UI, over MQTT
     868 MHz heavily.
 * optional: microSD card (FAT32)
 
+The SX1262 receives at most 255 raw bytes per frame, a limit of its packet engine.
+That covers T1 telegrams up to about 150 bytes and C1 telegrams up to about 220
+bytes, which is nearly every meter; longer ones show as truncated. The CC1101 streams
+its FIFO and receives frames of any length.
+
 ## Install
 
-Download `wmbuster-adv-full.bin` and flash it at offset **0x0**, for example with
-the [esptool-js web flasher](https://espressif.github.io/esptool-js/) or:
+Download `wmbuster-adv-full.bin` from the
+[releases page](https://github.com/i12bp8/wmbuster-ADV/releases) and flash it at offset
+**0x0**, for example with the
+[esptool-js web flasher](https://espressif.github.io/esptool-js/) or:
 
 ```bash
 esptool.py --chip esp32s3 write_flash 0x0 wmbuster-adv-full.bin
@@ -159,6 +166,23 @@ make -C test/ui_preview    # renders every screen of the device UI to PNG
 
 The analyzer is also available on the PC: `make -C test/host analyze &&
 test/host/build/analyze <hex> [driver|auto] [key]`.
+
+### Releases
+
+Add a section for the new version to `CHANGELOG.md` and set `WMB_VERSION` in
+`src/version.h`. Then either push a matching tag:
+
+```bash
+git tag v2.1.0 && git push origin v2.1.0
+```
+
+or open **Actions → Build → Run workflow** on GitHub and enter the tag (`v2.1.0`);
+the tag is then created on the commit that was built.
+
+GitHub Actions runs the tests, builds the firmware and publishes the release with
+`wmbuster-adv-full.bin`, `firmware.bin`, checksums and the changelog section. Tags
+with a suffix (`v2.1.0-beta.1`) become pre-releases. Every push and pull request is
+built too, and the images are attached to the run.
 
 ### Updating the drivers
 

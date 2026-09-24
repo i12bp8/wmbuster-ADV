@@ -69,6 +69,8 @@ struct DecodeOptions {
     bool             generic_fallback;// decode OMS records generically when no driver
     uint32_t         now_unix;        // current time for DES mode 3, 0 = unknown
     bool             simulated;       // replayed/pasted telegram (may be decrypted already)
+    bool             decode_bad_tag;  // AES-CCM: decode content whose tag fails, flagged FAILED_DECODE,
+                                      // like wmbusmeters. Off: reported as a wrong key instead.
 };
 
 // All working memory for one decode. Keep one instance (static / heap) and
