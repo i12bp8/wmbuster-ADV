@@ -60,10 +60,11 @@ button.d{background:#3a1616;color:#ffb3b3;border:1px solid #6b2424;border-radius
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20}
 #toast.on{opacity:1}
 .feed td{white-space:nowrap}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .filter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .filter input{max-width:260px}
 .filter select{max-width:180px}
-@media(max-width:700px){.hide-s{display:none}nav button{padding:6px 8px}header{flex-wrap:wrap}}
+@media(max-width:700px){.hide-s{display:none}nav button{padding:6px 8px}header{flex-wrap:wrap}th,td{padding:6px 5px}.bar{display:none}.card{padding:10px}}
 </style>
 </head>
 <body>
@@ -85,7 +86,7 @@ button.d{background:#3a1616;color:#ffb3b3;border:1px solid #6b2424;border-radius
     </div>
     <div class="card">
       <h2>Live telegrams</h2>
-      <table class="feed"><thead><tr><th>Time</th><th>Mode</th><th>ID</th><th class="hide-s">Mfct / driver</th><th>Value</th><th>RSSI</th><th class="hide-s">Status</th></tr></thead><tbody id="feed"></tbody></table>
+      <div class="tw"><table class="feed"><thead><tr><th>Time</th><th>Mode</th><th>ID</th><th class="hide-s">Mfct / driver</th><th>Value</th><th>RSSI</th><th class="hide-s">Status</th></tr></thead><tbody id="feed"></tbody></table></div>
     </div>
   </section>
 
@@ -96,7 +97,7 @@ button.d{background:#3a1616;color:#ffb3b3;border:1px solid #6b2424;border-radius
         <select id="qs"><option value="">All meters</option><option value="ok">Decoded</option><option value="enc">Encrypted</option><option value="star">Starred</option><option value="alarm">Alarms</option></select>
         <button class="g" id="geo">Export GeoJSON</button>
       </div>
-      <table><thead><tr><th data-s="id">ID</th><th data-s="name">Name / driver</th><th data-s="value">Value</th><th data-s="rssi">RSSI</th><th data-s="count" class="hide-s">Count</th><th data-s="last">Seen</th></tr></thead><tbody id="meters"></tbody></table>
+      <div class="tw"><table><thead><tr><th data-s="id">ID</th><th data-s="name">Name / driver</th><th data-s="value">Value</th><th data-s="rssi">RSSI</th><th data-s="count" class="hide-s">Count</th><th data-s="last">Seen</th></tr></thead><tbody id="meters"></tbody></table></div>
     </div>
   </section>
 
@@ -220,7 +221,7 @@ async function loadMeters(){try{meters=await api('/api/meters')}catch(e){return}
 function renderMeters(){const q=$('#q').value.toLowerCase(),f=$('#qs').value;let l=meters.filter(m=>{if(f=='ok'&&m.status!='ok')return false;if(f=='enc'&&m.status!='encrypted')return false;if(f=='star'&&!m.starred)return false;if(f=='alarm'&&!m.alarm)return false;if(!q)return true;return[m.id,m.name,m.mfct,m.mfct_name,m.driver,m.media].join(' ').toLowerCase().includes(q)});
 const key={id:m=>m.id,name:m=>(m.name||m.driver||'~'),value:m=>m.value||'',rssi:m=>-m.rssi,count:m=>-m.count,last:m=>m.age};
 l.sort((a,b)=>{const x=key[sortk](a),y=key[sortk](b);return(x>y?1:x<y?-1:0)*sortd});
-$('#meters').innerHTML=l.map(m=>`<tr data-id="${m.id}"><td class="mono">${m.starred?'<span class="star">★</span> ':''}${m.id}<div class="muted">${esc(m.mfct)} · ${esc(m.media)}</div></td><td>${m.name?'<b>'+esc(m.name)+'</b><br>':''}<span class="muted">${esc(m.driver||'-')}</span> ${m.key?'<span class="tag">key</span>':''}</td><td>${esc(m.value||'')}<div>${stTag(m)}</div></td><td>${rssiBar(m.rssi)}<div class="muted mono">best ${m.rssi_best}</div></td><td class="hide-s">${m.count}<div class="muted">${m.interval?'every '+ago(m.interval):''}</div></td><td class="muted">${ago(m.age)}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">No meters yet</td></tr>';
+$('#meters').innerHTML=l.map(m=>`<tr data-id="${m.id}"><td class="mono">${m.starred?'<span class="star">★</span> ':''}${m.id}<div class="muted">${esc(m.mfct)} · ${esc(m.media)}</div></td><td>${m.name?'<b>'+esc(m.name)+'</b><br>':''}<span class="muted">${esc(m.driver||'-')}</span> ${m.key?'<span class="tag">key</span>':''}</td><td>${esc(m.value||'')}<div>${stTag(m)}</div></td><td>${rssiBar(m.rssi)}<div class="muted mono hide-s">best ${m.rssi_best}</div></td><td class="hide-s">${m.count}<div class="muted">${m.interval?'every '+ago(m.interval):''}</div></td><td class="muted">${ago(m.age)}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">No meters yet</td></tr>';
 $('#meters').querySelectorAll('tr[data-id]').forEach(r=>r.onclick=()=>openMeter(r.dataset.id))}
 $('#q').oninput=renderMeters;$('#qs').onchange=renderMeters;
 $$('th[data-s]').forEach(t=>t.onclick=()=>{const k=t.dataset.s;sortd=sortk==k?-sortd:1;sortk=k;renderMeters()});
