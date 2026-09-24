@@ -1,0 +1,99 @@
+# Builds and tests every push and pull request. Pushing a tag vX.Y.Z (or
+# vX.Y.Z-beta.1 etc., published as a pre-release) also creates a GitHub release
+# with the firmware images and the matching CHANGELOG.md section.
+name: Build
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - name: Host tests
+        run: make -C test/host
+
+      - name: Version
+        run: |
+          src=$(sed -n 's/^#define WMB_VERSION "\(.*\)"$/\1/p' src/version.h)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            ver="${GITHUB_REF_NAME#v}"
+            if [ "${ver%%-*}" != "$src" ]; then
+              echo "::error::tag $GITHUB_REF_NAME does not match WMB_VERSION $src in src/version.h"
+              exit 1
+            fi
+          else
+            ver="$src+$(git rev-parse --short=7 HEAD)"
+          fi
+          if ! [[ "$ver" =~ ^[0-9A-Za-z.+-]+$ ]]; then
+            echo "::error::unexpected version '$ver'"
+            exit 1
+          fi
+          echo "VERSION=$ver" >> "$GITHUB_ENV"
+          echo "PLATFORMIO_BUILD_FLAGS=-DWMB_VERSION=\\\"$ver\\\"" >> "$GITHUB_ENV"
+
+      - name: Build firmware
+        run: pio run -e m5stack-cardputer-adv
+
+      - name: Collect images
+        run: |
+          mkdir dist
+          cp .pio/build/m5stack-cardputer-adv/wmbuster-adv-full.bin dist/
+          cp .pio/build/m5stack-cardputer-adv/firmware.bin dist/
+          (cd dist && sha256sum *.bin > SHA256SUMS)
+          cat dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wmbuster-adv-${{ env.VERSION }}
+          path: dist/
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base="${VERSION%%-*}"
+          # The CHANGELOG.md section for this version, without its heading.
+          awk -v v="$base" '/^## /{p = ($2 == v); next} p' CHANGELOG.md > notes.md
+          cat >> notes.md <<'NOTES'
+
+          ## Install
+
+          * **First install, or coming from 1.x:** flash `wmbuster-adv-full.bin` at offset **0x0**, for example with the [esptool-js web flasher](https://espressif.github.io/esptool-js/) or `esptool.py --chip esp32s3 write_flash 0x0 wmbuster-adv-full.bin`.
+          * **Update from 2.x:** upload `firmware.bin` in the web UI (Settings → Firmware update).
+          NOTES
+          flags=()
+          if [[ "$VERSION" == *-* ]]; then flags+=(--prerelease); fi
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --verify-tag "${flags[@]}" \
+              --title "wM-Buster ADV v$VERSION" --notes-file notes.md
+          fi
