@@ -129,6 +129,9 @@ static void test_capture() {
     CHECK(frame_from_capture(raw, sizeof(raw), RadioBand::CT, &f, &used) == CaptureStatus::Ok);
     CHECK(f.mode == LinkMode::T1 && f.len == n && memcmp(f.data, plain, n) == 0);
     CHECK(used == el);
+    // The radio stops receiving after capture_expected_len() bytes.
+    CHECK(capture_expected_len(raw, 2, RadioBand::CT) == 0);
+    CHECK(capture_expected_len(raw, 3, RadioBand::CT) == (int)el);
     // Odd length frame (drop the last byte and fix L).
     uint8_t odd[80];
     memcpy(odd, plain, n - 1);
@@ -150,13 +153,34 @@ static void test_capture() {
     for (size_t i = on + 2; i < sizeof(raw); ++i) raw[i] = 0x00;
     CHECK(frame_from_capture(raw, sizeof(raw), RadioBand::CT, &f, &used) == CaptureStatus::Ok);
     CHECK(f.mode == LinkMode::C1 && f.format == FrameFormat::A && f.len == n);
+    CHECK(capture_expected_len(raw, 3, RadioBand::CT) == (int)(2 + on) && used == 2 + on);
     // C1 frame format B: 54 3D + frame
     raw[1] = 0x3D;
     on = add_crcs_b(plain, n, raw + 2);
     CHECK(frame_from_capture(raw, sizeof(raw), RadioBand::CT, &f, &used) == CaptureStatus::Ok);
     CHECK(f.format == FrameFormat::B && f.len == n && memcmp(f.data + 1, plain + 1, n - 1) == 0);
+    CHECK(capture_expected_len(raw, 3, RadioBand::CT) == (int)(2 + on));
+    // Noise after a false sync: invalid 3of6 or a too small L-field.
+    uint8_t noise[3] = { 0x00, 0x00, 0x00 };
+    CHECK(capture_expected_len(noise, 3, RadioBand::CT) < 0);
     // Truncated capture
     CHECK(frame_from_capture(raw, 20, RadioBand::CT, &f, &used) == CaptureStatus::Truncated);
+
+    // S1: Manchester coded format A (both chip polarities are accepted).
+    on = add_crcs_a(plain, n, onair);
+    for (int inv = 0; inv < 2; ++inv) {
+        memset(raw, 0x55, sizeof(raw));
+        for (size_t i = 0; i < on && 2 * i + 1 < sizeof(raw); ++i) {
+            uint16_t chips = 0;
+            for (int b = 7; b >= 0; --b) chips = (uint16_t)(chips << 2 | (((onair[i] >> b) & 1) ^ inv ? 2 : 1));
+            raw[2 * i] = (uint8_t)(chips >> 8);
+            raw[2 * i + 1] = (uint8_t)chips;
+        }
+        CHECK(capture_expected_len(raw, 23, RadioBand::S) == 0);
+        CHECK(capture_expected_len(raw, 24, RadioBand::S) == (int)(2 * on));
+        CHECK(frame_from_capture(raw, sizeof(raw), RadioBand::S, &f, &used) == CaptureStatus::Ok);
+        CHECK(f.mode == LinkMode::S1 && f.len == n && memcmp(f.data + 1, plain + 1, n - 1) == 0);
+    }
 
     // Analyzer input: with CRCs (A and B), without, wired.
     on = add_crcs_a(plain, n, onair);

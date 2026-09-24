@@ -168,6 +168,31 @@ static CaptureStatus decode_s(const uint8_t* raw, size_t raw_len, Frame* out, si
     return best;
 }
 
+int capture_expected_len(const uint8_t* raw, size_t n, RadioBand band) {
+    if (band == RadioBand::S) {
+        // The chip polarity is only known once the first block (10 bytes +
+        // CRC, 24 Manchester coded bytes) checks out.
+        if (n < 24) return 0;
+        for (int inv = 0; inv < 2; ++inv) {
+            uint8_t blk[12];
+            if (!coding_manchester_decode(raw, 24, blk, 12, inv != 0) || blk[0] < 10) continue;
+            if (crc16_en13757(blk, 10) != be16(blk + 10)) continue;
+            return (int)frame_len_format_a(blk[0]) * 2;
+        }
+        return -1;
+    }
+    if (n < 3) return 0;
+    if (raw[0] == 0x54 && (raw[1] == 0xCD || raw[1] == 0x3D)) {
+        uint8_t l = raw[2];
+        if (l < 10) return -1;
+        return 2 + (int)(raw[1] == 0xCD ? frame_len_format_a(l) : frame_len_format_b(l));
+    }
+    uint8_t head[2];
+    if (!coding_3of6_decode(raw, 3, head, 2)) return -1;
+    if (head[0] < 10) return -1;
+    return (int)coding_3of6_encoded_len(frame_len_format_a(head[0]));
+}
+
 CaptureStatus frame_from_capture(const uint8_t* raw, size_t raw_len, RadioBand band,
                                  Frame* out, size_t* consumed) {
     if (consumed) *consumed = 0;

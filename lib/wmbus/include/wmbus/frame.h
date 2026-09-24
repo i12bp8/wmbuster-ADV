@@ -47,6 +47,13 @@ inline size_t frame_len_format_b(uint8_t l) { return (size_t)l + 1; }
 bool frame_trim_format_a(const uint8_t* in, size_t in_len, Frame* out);
 bool frame_trim_format_b(const uint8_t* in, size_t in_len, Frame* out);
 
+// How many raw bytes (after the sync word) the frame starting at raw needs:
+// > 0 the total on-air length, 0 when more bytes are needed to tell (C/T: 3,
+// S: 24, the first block must pass its CRC to know the Manchester polarity),
+// < 0 when the start is not a wM-Bus frame (noise / false sync).
+// Used by the radio to stop receiving right after the frame.
+int capture_expected_len(const uint8_t* raw, size_t n, RadioBand band);
+
 // Decode a raw capture (bytes following the 16-bit sync word) into a frame.
 // For the C/T band: C-mode captures start with 54 CD (format A) or 54 3D
 // (format B); everything else is treated as 3-out-of-6 coded T-mode.

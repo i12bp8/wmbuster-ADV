@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>wM-Buster ADV</title>
+<style>
+:root{--bg:#0b0e14;--panel:#121722;--panel2:#171e2c;--line:#243047;--text:#dce6f5;--muted:#7d8ba6;--acc:#39d0ff;--acc2:#8c7bff;--ok:#3ddc84;--warn:#ffb020;--bad:#ff5c5c;--r:10px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--acc)}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{font-weight:800;letter-spacing:.5px;font-size:17px}
+.logo b{color:var(--acc)}
+.logo i{font-style:normal;color:var(--acc2);font-size:12px;margin-left:4px}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button{background:none;border:1px solid transparent;color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{color:var(--text);background:var(--panel2);border-color:var(--line)}
+main{max-width:1200px;margin:0 auto;padding:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.chip b{color:var(--text);font-weight:600}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--muted);vertical-align:middle}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--panel2);border-radius:8px;padding:10px}
+.stat .v{font-size:22px;font-weight:700}
+.stat .k{color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--panel2)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+.muted{color:var(--muted)}
+.tag{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11.5px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.tag.ok{color:var(--ok);border-color:#1f5a3c}.tag.warn{color:var(--warn);border-color:#6a4b10}.tag.bad{color:var(--bad);border-color:#6b2424}.tag.acc{color:var(--acc);border-color:#1b5470}
+.bar{display:inline-block;width:46px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;vertical-align:middle;margin-right:6px}
+.bar i{display:block;height:100%}
+.star{color:var(--warn)}
+input,select,textarea{background:#0e131d;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;width:100%}
+textarea{min-height:90px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.check{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--text);font-size:13.5px}
+.check input{width:auto}
+button.b{background:var(--acc);color:#001018;border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;font:inherit;font-weight:700}
+button.g{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer;font:inherit}
+button.d{background:#3a1616;color:#ffb3b3;border:1px solid #6b2424;border-radius:8px;padding:9px 14px;cursor:pointer;font:inherit}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hide{display:none!important}
+#drawer{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:flex-end;z-index:10}
+#drawer .p{width:min(620px,100%);height:100%;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:16px}
+.kv{display:grid;grid-template-columns:minmax(140px,40%) 1fr;gap:0;border-top:1px solid var(--line)}
+.kv div{padding:6px 4px;border-bottom:1px solid var(--line)}
+.kv div:nth-child(odd){color:var(--muted)}
+.hex{word-break:break-all;background:#0e131d;border:1px solid var(--line);border-radius:8px;padding:8px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20}
+#toast.on{opacity:1}
+.feed td{white-space:nowrap}
+.filter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter input{max-width:260px}
+.filter select{max-width:180px}
+@media(max-width:700px){.hide-s{display:none}nav button{padding:6px 8px}header{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">wM-<b>BUSTER</b><i>ADV</i></div>
+  <nav>
+    <button data-t="live" class="on">Live</button>
+    <button data-t="meters">Meters</button>
+    <button data-t="analyze">Analyzer</button>
+    <button data-t="settings">Settings</button>
+  </nav>
+</header>
+<main>
+  <div class="chips" id="chips"></div>
+
+  <section id="t-live">
+    <div class="card">
+      <div class="grid" id="stats"></div>
+    </div>
+    <div class="card">
+      <h2>Live telegrams</h2>
+      <table class="feed"><thead><tr><th>Time</th><th>Mode</th><th>ID</th><th class="hide-s">Mfct / driver</th><th>Value</th><th>RSSI</th><th class="hide-s">Status</th></tr></thead><tbody id="feed"></tbody></table>
+    </div>
+  </section>
+
+  <section id="t-meters" class="hide">
+    <div class="card">
+      <div class="filter">
+        <input id="q" placeholder="Filter id, name, manufacturer, driver...">
+        <select id="qs"><option value="">All meters</option><option value="ok">Decoded</option><option value="enc">Encrypted</option><option value="star">Starred</option><option value="alarm">Alarms</option></select>
+        <button class="g" id="geo">Export GeoJSON</button>
+      </div>
+      <table><thead><tr><th data-s="id">ID</th><th data-s="name">Name / driver</th><th data-s="value">Value</th><th data-s="rssi">RSSI</th><th data-s="count" class="hide-s">Count</th><th data-s="last">Seen</th></tr></thead><tbody id="meters"></tbody></table>
+    </div>
+  </section>
+
+  <section id="t-analyze" class="hide">
+    <div class="card">
+      <h2>Telegram analyzer</h2>
+      <label>Telegram (hex: radio capture, frame with or without CRCs, wired M-Bus)</label>
+      <textarea id="ahex" placeholder="2E44931578563412330333637A2A0020255923C95AAA26D1B2E7493B013EC4A6F6D3529B520EDFF0EA6DEFC99D6D69EBF3"></textarea>
+      <div class="row">
+        <div><label>Key (32 hex AES / 16 hex DES, optional)</label><input id="akey" class="mono"></div>
+        <div><label>Driver</label><select id="adrv"><option value="">auto detect</option></select></div>
+      </div>
+      <div class="actions"><button class="b" id="ago">Decode</button><a id="alink" class="g hide" target="_blank" rel="noopener" style="text-decoration:none;padding:9px 14px">Open on wmbusmeters.org</a></div>
+    </div>
+    <div class="card hide" id="ares"></div>
+  </section>
+
+  <section id="t-settings" class="hide">
+    <form id="sform">
+    <div class="card"><h2>Radio</h2>
+      <div class="row">
+        <div><label>Hardware</label><select name="radio_hw"><option value="0">Auto detect</option><option value="1">Cap LoRa-1262 (SX1262)</option><option value="2">Hydra RF (CC1101)</option></select></div>
+        <div><label>Band</label><select name="band_mode"><option value="0">C1 + T1 (868.95 MHz)</option><option value="1">S1 (868.30 MHz)</option><option value="2">Alternate C1/T1 and S1</option></select></div>
+        <div><label>Dwell per band when alternating (s)</label><input name="hop_s" type="number" min="5" max="3600"></div>
+        <div><label>SX1262 receiver bandwidth</label><select name="sx_bw_idx"><option value="0">156 kHz</option><option value="1">187 kHz</option><option value="2">234 kHz (default)</option><option value="3">312 kHz</option><option value="4">374 kHz</option><option value="5">467 kHz</option></select></div>
+      </div>
+      <label class="check"><input type="checkbox" name="boosted_gain"> SX1262 boosted receive gain</label>
+    </div>
+    <div class="card"><h2>WiFi</h2>
+      <div class="row">
+        <div><label>Mode</label><select name="wifi_mode"><option value="0">Off</option><option value="1">Access point</option><option value="2">Join network</option><option value="3">Access point + join network</option></select></div>
+        <div><label>Network (SSID)</label><input name="wifi_ssid" autocomplete="off"></div>
+        <div><label>Network password</label><input name="wifi_pass" type="password" autocomplete="new-password"></div>
+        <div><label>Access point name</label><input name="ap_ssid" placeholder="wM-Buster-XXXX"></div>
+        <div><label>Access point password (8+ chars, empty = open)</label><input name="ap_pass" type="password" autocomplete="new-password"></div>
+        <div><label>Hostname (mDNS)</label><input name="hostname"></div>
+        <div><label>Web UI password (user admin, empty = none)</label><input name="web_pass" type="password" autocomplete="new-password"></div>
+      </div>
+    </div>
+    <div class="card"><h2>MQTT</h2>
+      <label class="check"><input type="checkbox" name="mqtt_enabled"> Publish telegrams to MQTT</label>
+      <div class="row">
+        <div><label>Broker host</label><input name="mqtt_host"></div>
+        <div><label>Port</label><input name="mqtt_port" type="number"></div>
+        <div><label>User</label><input name="mqtt_user" autocomplete="off"></div>
+        <div><label>Password</label><input name="mqtt_pass" type="password" autocomplete="new-password"></div>
+        <div><label>Topic prefix</label><input name="mqtt_prefix"></div>
+      </div>
+      <label class="check"><input type="checkbox" name="mqtt_ha"> Home Assistant discovery (configured meters)</label>
+      <label class="check"><input type="checkbox" name="mqtt_raw"> Also publish undecoded telegrams (hex)</label>
+    </div>
+    <div class="card"><h2>Outputs &amp; notifications</h2>
+      <div class="row">
+        <div><label>USB serial output</label><select name="serial_out"><option value="0">Off</option><option value="1">Log lines</option><option value="2">JSON (wmbusmeters)</option><option value="3">rtl_wmbus (pipe into wmbusmeters)</option></select></div>
+        <div><label>ntfy URL (starred meters)</label><input name="ntfy_url" placeholder="https://ntfy.sh/my-topic"></div>
+      </div>
+      <label class="check"><input type="checkbox" name="sd_log"> Log telegrams to the SD card</label>
+    </div>
+    <div class="card"><h2>Device</h2>
+      <div class="row">
+        <div><label>Display brightness</label><input name="brightness" type="range" min="10" max="255"></div>
+        <div><label>Dim display after (s, 0 = never)</label><input name="dim_s" type="number" min="0"></div>
+        <div><label>Time zone offset (minutes)</label><input name="tz_min" type="number"></div>
+        <div><label>Theme</label><select name="theme"><option value="0">Night</option><option value="1">Amber</option><option value="2">Ocean</option><option value="3">Paper</option></select></div>
+      </div>
+      <label class="check"><input type="checkbox" name="sound"> Sounds</label>
+      <label class="check"><input type="checkbox" name="beep_all"> Beep on every telegram</label>
+    </div>
+    <div class="actions"><button class="b" type="submit">Save settings</button><button class="g" type="button" id="reboot">Reboot</button></div>
+    </form>
+    <div class="card" style="margin-top:14px"><h2>Meter keys</h2>
+      <p class="muted">One meter per line: <span class="mono">id,key[,name[,driver]]</span> &mdash; wmbusmeters meter files (<span class="mono">name= id= key= driver=</span>) work too.</p>
+      <textarea id="keys"></textarea>
+      <div class="actions"><button class="b" id="kimp">Import</button><a class="g" href="/api/keys" style="text-decoration:none">Export</a></div>
+    </div>
+    <div class="card"><h2>Logs &amp; firmware</h2>
+      <div class="actions">
+        <a class="g" href="/api/log?f=rtl" style="text-decoration:none">telegrams.rtl</a>
+        <a class="g" href="/api/log?f=json" style="text-decoration:none">telegrams.jsonl</a>
+        <a class="g" href="/api/log?f=ward" style="text-decoration:none">wardrive.csv</a>
+        <button class="d" id="clr">Clear meter list</button>
+      </div>
+      <label>Firmware update (.bin)</label>
+      <input type="file" id="fw" accept=".bin">
+      <div class="actions"><button class="b" id="fwgo">Upload firmware</button><span id="fwst" class="muted"></span></div>
+    </div>
+  </section>
+</main>
+
+<div id="drawer" class="hide"><div class="p" id="dp"></div></div>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tab='live', st={}, meters=[], sortk='last', sortd=1, feedSeq=0, drivers=[];
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2500)}
+async function api(u,body){const o=body?{method:'POST',body:body instanceof FormData?body:new URLSearchParams(body)}:{};const r=await fetch(u,o);if(!r.ok)throw new Error(await r.text()||r.status);const ct=r.headers.get('content-type')||'';return ct.includes('json')?r.json():r.text()}
+function ago(s){if(s==null)return'-';if(s<5)return'now';if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'}
+function rssiBar(r){const p=Math.max(0,Math.min(100,(r+120)*100/70));const c=r>-80?'var(--ok)':r>-95?'var(--warn)':'var(--bad)';return `<span class="bar"><i style="width:${p}%;background:${c}"></i></span><span class="mono">${r}</span>`}
+function stTag(m){if(m.alarm)return`<span class="tag bad">${esc(m.status_txt||'ALARM')}</span>`;if(m.status=='ok')return`<span class="tag ok">${esc(m.status_txt||'OK')}</span>`;if(m.status=='encrypted')return`<span class="tag warn">${m.decrypt=='encrypted (wrong key)'?'wrong key':'encrypted'}</span>`;return`<span class="tag">${esc(m.status)}</span>`}
+$$('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+function show(t){tab=t;$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));['live','meters','analyze','settings'].forEach(x=>$('#t-'+x).classList.toggle('hide',x!=t));if(t=='settings')loadSettings();if(t=='meters')loadMeters();if(t=='analyze'&&!drivers.length)loadDrivers()}
+async function loadStatus(){try{st=await api('/api/status')}catch(e){$('#chips').innerHTML='<span class="chip"><span class="dot bad"></span>offline</span>';return}
+const c=[],r=st.radio,n=st.net;
+c.push(`<span class="chip"><span class="dot ${r.chip!='none'?'ok':'bad'}"></span><b>${esc(r.chip)}</b> ${esc(r.band)}</span>`);
+c.push(`<span class="chip"><b>${st.app.per_min}</b> /min</span>`);
+c.push(`<span class="chip"><b>${st.meters}</b> meters</span>`);
+if(n.sta_ip)c.push(`<span class="chip"><span class="dot ok"></span>${esc(n.sta_ssid)} ${esc(n.sta_ip)}</span>`);
+if(n.ap_on)c.push(`<span class="chip"><span class="dot ok"></span>AP ${esc(n.ap_ssid)} (${n.ap_clients})</span>`);
+if(st.mqtt.enabled)c.push(`<span class="chip"><span class="dot ${st.mqtt.connected?'ok':'bad'}"></span>MQTT ${st.mqtt.connected?st.mqtt.published+' sent':esc(st.mqtt.error||'connecting')}</span>`);
+c.push(`<span class="chip"><span class="dot ${st.gnss.fix?'ok':st.gnss.present?'warn':''}"></span>GNSS ${st.gnss.fix?st.gnss.sats+' sats':st.gnss.present?'no fix':'off'}</span>`);
+c.push(`<span class="chip"><span class="dot ${st.sd.ok?'ok':''}"></span>SD ${st.sd.ok?Math.round(st.sd.free_mb)+' MB free':'none'}</span>`);
+if(st.battery>=0)c.push(`<span class="chip">🔋 <b>${st.battery}%</b></span>`);
+c.push(`<span class="chip">up ${ago(st.uptime)}</span>`);
+$('#chips').innerHTML=c.join('');
+if(tab=='live'){const a=st.app,s=[['Telegrams',a.frames],['Decoded',a.decoded],['Encrypted',a.encrypted],['Other',a.undecoded],['CRC errors',a.crc_errors],['Syncs',r.syncs],['Noise syncs',r.noise],['Noise floor',r.noise_floor+' dBm'],['C1 / T1 / S1',a.c1+' / '+a.t1+' / '+a.s1],['Free heap',Math.round(st.heap/1024)+' kB']];
+$('#stats').innerHTML=s.map(x=>`<div class="stat"><div class="v">${x[1]}</div><div class="k">${x[0]}</div></div>`).join('')}}
+async function loadFeed(){if(tab!='live')return;try{const f=await api('/api/feed');const tb=$('#feed');tb.innerHTML=f.map(e=>`<tr data-id="${e.id}"><td class="muted">${ago(e.age)}</td><td><span class="tag acc">${e.mode}</span></td><td class="mono">${e.id}</td><td class="hide-s">${esc(e.mfct)} <span class="muted">${esc(e.driver||'')}</span></td><td>${esc(e.value||'')}</td><td>${rssiBar(e.rssi)}</td><td class="hide-s">${stTag(e)}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">Waiting for telegrams...</td></tr>';tb.querySelectorAll('tr[data-id]').forEach(r=>r.onclick=()=>openMeter(r.dataset.id))}catch(e){}}
+async function loadMeters(){try{meters=await api('/api/meters')}catch(e){return}renderMeters()}
+function renderMeters(){const q=$('#q').value.toLowerCase(),f=$('#qs').value;let l=meters.filter(m=>{if(f=='ok'&&m.status!='ok')return false;if(f=='enc'&&m.status!='encrypted')return false;if(f=='star'&&!m.starred)return false;if(f=='alarm'&&!m.alarm)return false;if(!q)return true;return[m.id,m.name,m.mfct,m.mfct_name,m.driver,m.media].join(' ').toLowerCase().includes(q)});
+const key={id:m=>m.id,name:m=>(m.name||m.driver||'~'),value:m=>m.value||'',rssi:m=>-m.rssi,count:m=>-m.count,last:m=>m.age};
+l.sort((a,b)=>{const x=key[sortk](a),y=key[sortk](b);return(x>y?1:x<y?-1:0)*sortd});
+$('#meters').innerHTML=l.map(m=>`<tr data-id="${m.id}"><td class="mono">${m.starred?'<span class="star">★</span> ':''}${m.id}<div class="muted">${esc(m.mfct)} · ${esc(m.media)}</div></td><td>${m.name?'<b>'+esc(m.name)+'</b><br>':''}<span class="muted">${esc(m.driver||'-')}</span> ${m.key?'<span class="tag">key</span>':''}</td><td>${esc(m.value||'')}<div>${stTag(m)}</div></td><td>${rssiBar(m.rssi)}<div class="muted mono">best ${m.rssi_best}</div></td><td class="hide-s">${m.count}<div class="muted">${m.interval?'every '+ago(m.interval):''}</div></td><td class="muted">${ago(m.age)}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">No meters yet</td></tr>';
+$('#meters').querySelectorAll('tr[data-id]').forEach(r=>r.onclick=()=>openMeter(r.dataset.id))}
+$('#q').oninput=renderMeters;$('#qs').onchange=renderMeters;
+$$('th[data-s]').forEach(t=>t.onclick=()=>{const k=t.dataset.s;sortd=sortk==k?-sortd:1;sortk=k;renderMeters()});
+function fieldsTable(fs){return`<div class="kv">${fs.map(f=>`<div class="mono">${esc(f.name)}</div><div>${esc(f.value)}</div>`).join('')}</div>`}
+async function openMeter(id){let m;try{m=await api('/api/meter?id='+id)}catch(e){toast('Meter not found');return}if(!drivers.length)await loadDrivers();
+const c=m.config||{};
+$('#dp').innerHTML=`<div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">${esc(c.name||m.id)}</h2><span class="mono muted">${m.id}</span><button class="g" style="margin-left:auto" id="dx">Close</button></div>
+<p class="muted">${esc(m.mfct)} ${esc(m.mfct_name||'')} · version ${m.version} · type ${m.type} (${esc(m.media)}) · ${esc(m.mode)} · ${m.count} telegrams · RSSI ${m.rssi} dBm (best ${m.rssi_best})${m.lat?` · <a target="_blank" href="https://www.openstreetmap.org/?mlat=${m.lat}&mlon=${m.lon}#map=19/${m.lat}/${m.lon}">map</a>`:''}</p>
+<div>${stTag(m)} <span class="tag">${esc(m.driver||'no driver')}</span> <span class="tag">${esc(m.decrypt)}</span></div>
+<h3>Values</h3>${m.fields&&m.fields.length?fieldsTable(m.fields):'<p class="muted">Nothing decoded'+(m.status=='encrypted'?' &mdash; the telegram is encrypted, add the meter key below.':'.')+'</p>'}
+<h3>Last telegram</h3><div class="hex mono">${m.hex}</div>
+<div class="actions"><button class="g" id="dcopy">Copy hex</button><a class="g" style="text-decoration:none" target="_blank" rel="noopener" href="https://wmbusmeters.org/analyze/${m.hex}">wmbusmeters.org analyzer</a><button class="g" id="dana">Open in analyzer</button></div>
+<h3>Configuration</h3>
+<div class="row"><div><label>Name</label><input id="cname" value="${esc(c.name||'')}"></div>
+<div><label>Driver</label><select id="cdrv"><option value="">auto (${esc(m.driver||'-')})</option>${drivers.map(d=>`<option ${c.driver==d?'selected':''}>${d}</option>`).join('')}</select></div></div>
+<label>Key ${c.key?'(set &mdash; leave empty to keep, "none" removes it)':'(32 hex digits, 16 for DES)'}</label><input id="ckey" class="mono" autocomplete="off">
+<label class="check"><input type="checkbox" id="cstar" ${c.starred?'checked':''}> Starred (top of lists, alerts, ntfy)</label>
+<div class="actions"><button class="b" id="csave">Save</button>${c.id?'<button class="d" id="cdel">Forget configuration</button>':''}</div>
+${m.json?`<h3>JSON</h3><div class="hex mono">${esc(m.json)}</div>`:''}`;
+$('#drawer').classList.remove('hide');
+$('#dx').onclick=()=>$('#drawer').classList.add('hide');
+$('#dcopy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(m.hex);toast('Copied')};
+$('#dana').onclick=()=>{$('#drawer').classList.add('hide');show('analyze');$('#ahex').value=m.hex;analyze()};
+$('#csave').onclick=async()=>{try{await api('/api/meter',{id:m.id,name:$('#cname').value,driver:$('#cdrv').value,key:$('#ckey').value,starred:$('#cstar').checked?1:0});toast('Saved');openMeter(m.id);loadMeters()}catch(e){toast('Error: '+e.message)}};
+const del=$('#cdel');if(del)del.onclick=async()=>{await api('/api/meter/delete',{id:m.id});toast('Configuration removed');openMeter(m.id);loadMeters()}}
+$('#drawer').onclick=e=>{if(e.target.id=='drawer')$('#drawer').classList.add('hide')};
+async function loadDrivers(){try{drivers=await api('/api/drivers');$('#adrv').innerHTML='<option value="">auto detect</option>'+drivers.map(d=>`<option>${d}</option>`).join('')}catch(e){}}
+async function analyze(){const hex=$('#ahex').value.trim();if(!hex)return;let r;try{r=await api('/api/analyze',{hex,key:$('#akey').value.trim(),driver:$('#adrv').value})}catch(e){toast('Error: '+e.message);return}
+const a=$('#ares');a.classList.remove('hide');const l=$('#alink');l.href='https://wmbusmeters.org/analyze/'+hex.replace(/[^0-9a-fA-F]/g,'');l.classList.remove('hide');
+if(!r.frame){a.innerHTML='<h2>Not a valid frame</h2><p class="muted">Check the hex; radio captures must pass the DLL CRCs.</p>';return}
+a.innerHTML=`<h2>${esc(r.id)} <span class="muted">${esc(r.mfct)} ${esc(r.mfct_name||'')}</span></h2><p>${stTag(r)} <span class="tag">${esc(r.driver||'no driver')}</span> <span class="tag">${esc(r.decrypt)}</span> <span class="tag">${esc(r.mode)}</span> <span class="muted">version ${r.version} type ${r.type} (${esc(r.media)}) CI ${r.ci}</span></p>${r.fields.length?fieldsTable(r.fields):'<p class="muted">No fields decoded.</p>'}${r.json?`<h3>JSON</h3><div class="hex mono">${esc(r.json)}</div>`:''}`}
+$('#ago').onclick=analyze;
+async function loadSettings(){const s=await api('/api/settings');const f=$('#sform');for(const k in s){const e=f.elements[k];if(!e)continue;if(e.type=='checkbox')e.checked=!!s[k];else e.value=s[k]}}
+$('#sform').onsubmit=async e=>{e.preventDefault();const f=$('#sform'),d={};for(const el of f.elements){if(!el.name)continue;d[el.name]=el.type=='checkbox'?(el.checked?1:0):el.value}try{const r=await api('/api/settings',d);toast(r.reboot?'Saved - reboot to change the radio hardware':'Saved')}catch(x){toast('Error: '+x.message)}};
+$('#reboot').onclick=async()=>{if(confirm('Reboot the device?')){await api('/api/reboot',{});toast('Rebooting...')}};
+$('#kimp').onclick=async()=>{try{const r=await api('/api/keys',{text:$('#keys').value});toast('Imported '+r.imported+' meters');$('#keys').value=''}catch(e){toast('Error: '+e.message)}};
+$('#clr').onclick=async()=>{if(confirm('Clear the list of meters heard (configuration is kept)?')){await api('/api/clear',{});toast('Cleared')}};
+$('#geo').onclick=()=>{const fs=meters.filter(m=>m.lat).map(m=>({type:'Feature',geometry:{type:'Point',coordinates:[m.lon,m.lat]},properties:{id:m.id,name:m.name,mfct:m.mfct,driver:m.driver,media:m.media,rssi_best:m.rssi_best,value:m.value}}));const b=new Blob([JSON.stringify({type:'FeatureCollection',features:fs})],{type:'application/geo+json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='wmbus-meters.geojson';a.click();toast(fs.length+' meters with position')};
+$('#fwgo').onclick=()=>{const f=$('#fw').files[0];if(!f){toast('Choose a .bin file');return}const fd=new FormData();fd.append('firmware',f,f.name);const x=new XMLHttpRequest();x.open('POST','/update');x.upload.onprogress=e=>{$('#fwst').textContent=Math.round(e.loaded*100/e.total)+'%'};x.onload=()=>{$('#fwst').textContent=x.status==200?'Done, rebooting...':'Failed: '+x.responseText};x.send(fd)};
+loadStatus();loadFeed();setInterval(loadStatus,3000);setInterval(loadFeed,2000);setInterval(()=>{if(tab=='meters')loadMeters()},5000);
+</script>
+</body>
+</html>
