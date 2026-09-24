@@ -65,6 +65,11 @@ driver engine, and shows the results on the Cardputer, in a web UI, over MQTT
     868 MHz heavily.
 * optional: microSD card (FAT32)
 
+The SX1262 receives at most 255 raw bytes per frame, a limit of its packet engine.
+That covers T1 telegrams up to about 150 bytes and C1 telegrams up to about 220
+bytes, which is nearly every meter; longer ones show as truncated. The CC1101 streams
+its FIFO and receives frames of any length.
+
 ## Install
 
 Download `wmbuster-adv-full.bin` from the

@@ -20,7 +20,7 @@
 
 namespace wmb {
 
-#define RADIO_CAPTURE_MAX 512
+#define RADIO_CAPTURE_MAX 584  // S1: the longest frame (290 bytes) is 580 bytes Manchester coded
 
 enum class RadioChip : uint8_t { None = 0, SX1262, CC1101 };
 

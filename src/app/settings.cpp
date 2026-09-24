@@ -240,7 +240,14 @@ int meterconf_import_text(const char* text) {
     size_t len = strlen(text);
     char* buf = (char*)malloc(len + 1);
     if (!buf) return 0;
-    memcpy(buf, text, len + 1);
+    // Copy with CRLF (Windows files, browser forms) and lone CR turned into LF,
+    // so blank lines still separate the key=value blocks.
+    size_t o = 0;
+    for (size_t i = 0; i < len; ++i) {
+        if (text[i] == '\r' && text[i + 1] == '\n') continue;
+        buf[o++] = text[i] == '\r' ? '\n' : text[i];
+    }
+    buf[o] = 0;
     if (strstr(buf, "id=") || strstr(buf, "id =")) {
         // Blocks separated by blank lines.
         char* p = buf;
@@ -297,7 +304,6 @@ int meterconf_import_sd(const char* path) {
     size_t rd = f.read((uint8_t*)buf, sz);
     f.close();
     buf[rd] = 0;
-    for (size_t i = 0; i < rd; ++i) if (buf[i] == '\r') buf[i] = '\n';
     int n = meterconf_import_text(buf);
     free(buf);
     return n;

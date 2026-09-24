@@ -195,8 +195,7 @@ static bool parse_ell(Cursor& c, const TelegramOptions& opt) {
         if (t->ell_sec == 1 && !have_key) {
             // Without a key the payload might already be decrypted (replayed
             // logs): accept it when the payload CRC checks out, like upstream.
-            uint16_t pl_crc0 = (uint16_t)(enc[1] << 8 | enc[0]);
-            if (enc_len >= 2 && pl_crc0 == crc16_en13757(enc + 2, enc_len - 2)) {
+            if (enc_len >= 2 && (uint16_t)(enc[1] << 8 | enc[0]) == crc16_en13757(enc + 2, enc_len - 2)) {
                 c.pos += 2;
                 return true;
             }
@@ -545,8 +544,13 @@ static size_t tpl_decrypt(Telegram* t, size_t pos, const TelegramOptions& opt) {
             t->decrypt = DecryptStatus::WrongKey;
             return 0;
         }
-        // No 2F2F check bytes here, the tag protects the content. Like
-        // upstream a bad tag is reported but the content is still decoded.
+        // No 2F2F check bytes here, the tag protects the content: a bad tag
+        // means a wrong key or a forged/corrupted telegram. wmbusmeters still
+        // decodes it (flagged FAILED_DECODE); by default it is rejected.
+        if (!t->tpl_ccm_tag_ok && !opt.decode_bad_tag) {
+            t->decrypt = DecryptStatus::WrongKey;
+            return 0;
+        }
         t->decrypt = DecryptStatus::Decrypted;
         memcpy(t->used_key, key, 16);
         if (!t->tpl_ccm_tag_ok) add_decoding_error(t, "FAILED_DECODE");

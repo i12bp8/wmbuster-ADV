@@ -20,6 +20,9 @@ struct NtfyMsg {
 
 static QueueHandle_t s_q = nullptr;
 
+// Mozilla's root CAs (tools/gen_ca_bundle.py), embedded by platformio.ini.
+extern const uint8_t s_ca_bundle[] asm("_binary_src_net_ca_bundle_dat_start");
+
 static void ntfy_task(void*) {
     NtfyMsg m;
     for (;;) {
@@ -32,7 +35,11 @@ static void ntfy_task(void*) {
         WiFiClient plain;
         bool ok;
         if (!strncmp(url, "https://", 8)) {
-            tls.setInsecure();  // no CA bundle on the device
+            if (time(nullptr) < 1700000000) {
+                Serial.println("[NTFY] clock not set yet, can't check the server certificate");
+                continue;
+            }
+            tls.setCACertBundle(s_ca_bundle);
             ok = http.begin(tls, url);
         } else {
             ok = http.begin(plain, url);

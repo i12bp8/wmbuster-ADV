@@ -43,6 +43,7 @@ struct TelegramOptions {
     bool permit_sanxing_609b;      // driver transform_payload=buggy_sanxing_609B
     uint32_t now_unix;             // current time (DES mode 3 IV), 0 = unknown
     bool simulated;                // replayed/pasted telegram: content may already be decrypted
+    bool decode_bad_tag;           // AES-CCM: decode even when the tag fails (FAILED_DECODE), like wmbusmeters
 };
 
 struct Telegram {

@@ -14,7 +14,8 @@ many new features.
 * **SX1262 (Cap LoRa-1262):** the antenna switch is now actually turned on. Earlier
   builds configured the IO expander wrong. Boosted RX gain, and the receiver drops
   false syncs quickly and stops right after each frame.
-* **CC1101 (Hydra RF):** frames are no longer cut off at 61 bytes.
+* **CC1101 (Hydra RF):** frames are no longer cut off at 61 bytes, and frames of any
+  length are received.
 * **Modes:** T1, C1 (frame A and B) and S1, with optional hopping between 868.95 and
   868.30 MHz.
 * **Radio task:** the radio runs on its own, so the screen, Wi-Fi and SD card no longer
@@ -38,7 +39,7 @@ many new features.
   decodes, telegram analyzer, key import, settings, log downloads, GeoJSON export and
   firmware updates over Wi-Fi.
 * MQTT with login, wmbusmeters-compatible JSON and Home Assistant discovery.
-* ntfy notifications for starred meters.
+* ntfy notifications for starred meters, over HTTPS with certificate checks.
 * USB serial output as log lines, JSON or `rtl_wmbus` lines for wmbusmeters on a PC,
   plus a command line.
 * SD card logs (raw telegrams, decoded JSON, wardriving CSV) and key import from

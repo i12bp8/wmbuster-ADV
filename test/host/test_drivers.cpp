@@ -104,6 +104,7 @@ int main(int argc, char** argv) {
             o.key = has_key ? key : nullptr;
             o.key_len = (uint8_t)key_len;
             o.simulated = true;
+            o.decode_bad_tag = true;  // compare with upstream, which decodes it
             o.forced_driver = drv;
             o.generic_fallback = true;
             decoded = wmbus_decode(&g_dec, f, o);
