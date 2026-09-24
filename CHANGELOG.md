@@ -1,9 +1,10 @@
 # Changelog
 
 A release is made by pushing a tag `vX.Y.Z` whose number matches `WMB_VERSION` in
-`src/version.h`. GitHub Actions then builds and tests the firmware and publishes the
-release with the section below for that version. Tags with a suffix, such as
-`v2.1.0-beta.1`, are published as pre-releases.
+`src/version.h`, or by running the Build workflow on GitHub with that tag. GitHub
+Actions then builds and tests the firmware and publishes the release with the section
+below for that version. Tags with a suffix, such as `v2.1.0-beta.1`, are published as
+pre-releases.
 
 ## 2.0.0
 

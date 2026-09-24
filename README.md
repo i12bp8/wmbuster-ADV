@@ -169,12 +169,15 @@ test/host/build/analyze <hex> [driver|auto] [key]`.
 
 ### Releases
 
-Add a section for the new version to `CHANGELOG.md`, set `WMB_VERSION` in
-`src/version.h`, then push a matching tag:
+Add a section for the new version to `CHANGELOG.md` and set `WMB_VERSION` in
+`src/version.h`. Then either push a matching tag:
 
 ```bash
 git tag v2.1.0 && git push origin v2.1.0
 ```
+
+or open **Actions → Build → Run workflow** on GitHub and enter the tag (`v2.1.0`);
+the tag is then created on the commit that was built.
 
 GitHub Actions runs the tests, builds the firmware and publishes the release with
 `wmbuster-adv-full.bin`, `firmware.bin`, checksums and the changelog section. Tags
