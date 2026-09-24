@@ -5,3 +5,4 @@
 __pycache__/
 src/decode/drivers_generated.cpp
 test/test_vectors/generated_*.h
+test/host/build/

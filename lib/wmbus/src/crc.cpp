@@ -1,4 +1,4 @@
-#include "wmbus_phy/crc.h"
+#include "wmbus/crc.h"
 
 namespace wmb {
 
